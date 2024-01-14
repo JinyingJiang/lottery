@@ -34,6 +34,19 @@
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
             padding: 10px 0;
         }
+        .result span_prize {
+            display: inline-block;
+            text-align: center;
+            font-size: 50px;
+            width: 50%;
+            background: red;
+            line-height: 40px;
+            color: white;
+            margin: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
+            padding: 10px 0;
+        }
         button, input, optgroup, select, textarea {
             color: inherit;
             font: inherit;
@@ -110,16 +123,26 @@
         }
         .tools {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
+            bottom: 100px;
+            right: 100px;
             text-align: center;
+            display: grid;
+            justify-items: center;
         }
         .tools .pure-button {
             display: inline-block;
             margin: 5px;
             padding: 10px 0;
             text-align: center;
-            width:50px;
+            width: 100%;
+        }
+        .prize-button {
+            display: grid;
+            justify-items: center;
+            width: 100%;
+            margin: 5px;
+            padding: 10px 5px;
+            text-align: center;
         }
         .mask {
             -webkit-filter:blur(5px);
@@ -132,27 +155,28 @@
         .result-btn {
             margin-top: 20px;
             text-align: right;
-            margin-right: 30px;
+            margin-right: 160px;
             text-decoration: none;
-            color: white;
+            color: red;
+            font-size: 36px;
         }
     </style>
 </head>
 <body>
 <div id="main" class="wall">
     <div class="result-btn">
-       <a href="./result.html" target="_blank">获奖名单</a>
+       <a href="./result.html" style="color: red" target="_blank">获奖名单</a>
     </div>
 </div>
 <div id="result" class="result">
 </div>
 <div id="tools" class="tools">
      <button
-        v-for="value in btns"
-        @click="onClick(value)"
-        class="pure-button"
+        v-for="(value, index) in btns"
+        @click="onClick(value, prize_titles[index])"
+        class="prize-button"
         :class="{ 'button-error': selected == value}"
-       >{{value}}</button>
+       >{{prize_titles[index]}}</button>
     <button
        class="pure-button"
        @click="toggle"
@@ -180,7 +204,7 @@
                 item.index = index;
                 var key = getKey(item);
                 var color = choosed[key] ? 'yellow' : 'white';
-                html.push('<li><a href="#" style="color: ' + color + ';">' + item.name + '</a></li>');
+                html.push('<li><a href="#" style="color: ' + color + '; font-size: 30px !important;">' + item.name + '</a></li>');
             });
             html.push('</ul>');
             return html.join('');
@@ -208,6 +232,8 @@
                   return m.name + '<br/>' + m.phone; 
                 });
             localStorage.setItem('choosed', JSON.stringify(choosed));
+            const value = localStorage.getItem('choosed');
+            console.log(value);
             return ret;
         };
         var canvas = document.createElement('canvas');
@@ -218,10 +244,14 @@
         new Vue({
             el: '#tools',
             data: {
-                selected: 30,
+                selected: 0,
+                selected_title: "先指定几等奖",
                 running: false,
                 btns: [
-                    30, 10, 5, 2, 1
+                    1, 2, 5, 10, 30
+                ],
+                prize_titles: [
+                    "一等奖: iPhone15 Pro Max 1台", "二等奖", "三等奖", "四等奖", "五等奖"
                 ]
             },
             mounted () {
@@ -230,7 +260,7 @@
                     textColour: null,
                     initial: speed(),
                     dragControl: 1,
-                    textHeight: 14
+                    textHeight: 18
                 });
             },
             methods: {
@@ -240,10 +270,11 @@
                         location.reload(true);
                     }
                 },
-                onClick: function(num){
+                onClick: function(num, prize_title){
                     $('#result').css('display', 'none');
                     $('#main').removeClass('mask');
                     this.selected = num;
+                    this.selected_title = prize_title;
                 },
                 toggle: function(){
                     if(this.running){
@@ -253,10 +284,14 @@
                             $('#result').css('display', 'block').html('<span>已抽完</span>');
                             return
                         }
-                        $('#result').css('display', 'block').html('<span>' + ret.join('</span><span>') + '</span>');
+                        $('#result').css('display', 'block').html(
+                            '<div style="display: block"><span_prize>' + this.selected_title + '</span_prize></div>' +
+                            '<div style="display: block"><span>' + ret.join('</span><span>') + '</span></div>');
                         TagCanvas.Reload('myCanvas');
+                        var selected_title = this.selected_title;
                         setTimeout(function(){
-                            localStorage.setItem(new Date().toString(), JSON.stringify(ret));
+                            // localStorage.setItem(new Date().toString(), JSON.stringify(ret));
+                            localStorage.setItem(selected_title, JSON.stringify(ret));
                             $('#main').addClass('mask');
                         }, 300);
                     } else {
