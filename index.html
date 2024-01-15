@@ -144,6 +144,14 @@
             padding: 10px 5px;
             text-align: center;
         }
+        .prize-button-second {
+            display: inline-block;
+            justify-items: center;
+            width: 20%;
+            margin: 5px;
+            padding: 10px 5px;
+            text-align: center;
+        }
         .mask {
             -webkit-filter:blur(5px);
             filter:blur(5px);
@@ -170,13 +178,15 @@
 </div>
 <div id="result" class="result">
 </div>
+<div id="prize_select_page" class="result">
+</div>
 <div id="tools" class="tools">
      <button
-        v-for="(value, index) in btns"
-        @click="onClick(value, prize_titles[index])"
+        v-for="(value, index) in prize_titles"
+        @click="onClick(value, index)"
         class="prize-button"
-        :class="{ 'button-error': selected == value}"
-       >{{prize_titles[index]}}</button>
+        :class="{ 'button-error': selected_title == value}"
+       >{{value}}</button>
     <button
        class="pure-button"
        @click="toggle"
@@ -192,6 +202,12 @@
     (function(){
         var choosed = JSON.parse(localStorage.getItem('choosed')) || {};
         console.log(choosed);
+        var choosed_black = JSON;
+        member_black.forEach(function (item) {
+          choosed_black[item.name] = "black";
+          console.log("Phone: " + item.phone + ", Name: " + item.name);
+        });
+
         var speed = function(){
             return [0.1 * Math.random() + 0.01, -(0.1 * Math.random() + 0.01)];
         };
@@ -204,7 +220,7 @@
                 item.index = index;
                 var key = getKey(item);
                 var color = choosed[key] ? 'yellow' : 'white';
-                html.push('<li><a href="#" style="color: ' + color + '; font-size: 30px !important;">' + item.name + '</a></li>');
+                html.push('<li><a href="#" style="color: ' + color + ';">' + item.name + '</a></li>');
             });
             html.push('</ul>');
             return html.join('');
@@ -213,6 +229,10 @@
             var list = canvas.getElementsByTagName('a');
             var color = 'yellow';
             var ret = member
+                .filter(function(m, index){
+                    m.index = index;
+                    return !choosed_black[m.name];
+                })
                 .filter(function(m, index){
                     m.index = index;
                     return !choosed[getKey(m)];
@@ -229,7 +249,8 @@
                 .map(function(m){
                   choosed[getKey(m)] = 1;
                   list[m.index].style.color = color;
-                  return m.name + '<br/>' + m.phone; 
+                  // return m.name + '<br/>' + m.phone;
+                  return m.name;
                 });
             localStorage.setItem('choosed', JSON.stringify(choosed));
             const value = localStorage.getItem('choosed');
@@ -246,12 +267,16 @@
             data: {
                 selected: 0,
                 selected_title: "先指定几等奖",
+                selected_prize_detail: "具体奖品内容",
                 running: false,
                 btns: [
-                    1, 2, 5, 10, 30
+                    [1], [2, 3]
                 ],
                 prize_titles: [
-                    "一等奖: iPhone15 Pro Max 1台", "二等奖", "三等奖", "四等奖", "五等奖"
+                    "一等奖: iPhone15 Pro Max 1台", "二等奖"
+                ],
+                prize_detail: [
+                    ["iPhone15 Pro Max"], ["iPad Pro", "iPad Air"]
                 ]
             },
             mounted () {
@@ -270,18 +295,28 @@
                         location.reload(true);
                     }
                 },
-                onClick: function(num, prize_title){
+                onClickSecond: function(num, prize_detail) {
+                    this.selected = num;
+                    this.selected_prize_detail = prize_detail;
+                },
+                onClick: function(prize_title, index){
                     $('#result').css('display', 'none');
                     $('#main').removeClass('mask');
-                    this.selected = num;
                     this.selected_title = prize_title;
+                    // $('#prize_select_page').css('display', 'block').html(
+                    //     '<div style="display: block">' +
+                    //       // '<div v-for="(value, index) in ' + prize_detail.Object + '" :key="index">' + 
+                    //         // '<button v-for="(secondValue, secondIndex) in value" class="prize-button-second" @click="onClickSecond(' + btns[index] + '[index], ' + prize_detail[index] + '[index])">按钮</button></div></div>'
+                    //         // '<button class="prize-button-second" @click="onClickSecond(' + btns[index][0].stringify() + ', ' + prize_detail[index][0].stringify() + ')">按钮</button></div>'
+                    //         // '<button class="prize-button-second" @click="onClickSecond(1, \'iPhone15 Pro Max\')">按钮</button></div>'
+                    // );
                 },
                 toggle: function(){
                     if(this.running){
                         TagCanvas.SetSpeed('myCanvas', speed());
                         var ret = lottery(this.selected);
                         if (ret.length === 0) {
-                            $('#result').css('display', 'block').html('<span>已抽完</span>');
+                            $('#result').css('display', 'block').html('<span>先指定几等奖</span>');
                             return
                         }
                         $('#result').css('display', 'block').html(
