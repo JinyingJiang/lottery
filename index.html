@@ -134,12 +134,12 @@
             margin: 5px;
             padding: 10px 0;
             text-align: center;
-            width: 100%;
+            width: 150%;
         }
         .prize-button {
             display: grid;
             justify-items: center;
-            width: 100%;
+            width: 150%;
             margin: 5px;
             padding: 10px 5px;
             text-align: center;
@@ -147,7 +147,7 @@
         .prize-button-second {
             display: inline-block;
             justify-items: center;
-            width: 20%;
+            width: 200px;
             margin: 5px;
             padding: 10px 5px;
             text-align: center;
@@ -173,26 +173,32 @@
 <body>
 <div id="main" class="wall">
     <div class="result-btn">
-       <a href="./result.html" style="color: red" target="_blank">获奖名单</a>
+        <a href="./result.html" style="color: red" target="_blank">获奖名单</a>
     </div>
 </div>
 <div id="result" class="result">
 </div>
-<div id="prize_select_page" class="result">
-</div>
 <div id="tools" class="tools">
-     <button
+    <button
         v-for="(value, index) in prize_titles"
         @click="onClick(value, index)"
         class="prize-button"
         :class="{ 'button-error': selected_title == value}"
-       >{{value}}</button>
+      >{{value}}</button>
     <button
-       class="pure-button"
-       @click="toggle"
-       :class="{'button-secondary': !running,
-               'button-success': running}">{{running?'停!':'开始'}}</button>
+        class="pure-button"
+        @click="toggle"
+        :class="{'button-secondary': !running,
+                'button-success': running}">{{running?'停!':'开始'}}</button>
     <button class="pure-button button-warning" @click="reset">重置</button>
+    <div id="prize_select_page" class="tools" v-if="isShow">
+        <button 
+            v-for="(value, index) in prize_detail[selected_title_index]"
+            @click="onClickSecond(value, index)"
+            class="prize-button-second"
+            :class="{ 'button-error': selected_prize_detail == value}"
+        >{{value}}</button>
+    </div>
 </div>
 <script type="text/javascript" src="js/zepto.js"></script>
 <script type="text/javascript" src="js/vue.js"></script>
@@ -267,17 +273,19 @@
             data: {
                 selected: 0,
                 selected_title: "先指定几等奖",
+                selected_title_index: 0,  // 标识当前选中的几等奖对应的向量index
                 selected_prize_detail: "具体奖品内容",
                 running: false,
                 btns: [
                     [1], [2, 3]
                 ],
                 prize_titles: [
-                    "一等奖: iPhone15 Pro Max 1台", "二等奖"
+                    "一等奖", "二等奖"
                 ],
                 prize_detail: [
                     ["iPhone15 Pro Max"], ["iPad Pro", "iPad Air"]
-                ]
+                ],
+                isShow: false,
             },
             mounted () {
                 canvas.innerHTML = createHTML();
@@ -295,38 +303,37 @@
                         location.reload(true);
                     }
                 },
-                onClickSecond: function(num, prize_detail) {
-                    this.selected = num;
-                    this.selected_prize_detail = prize_detail;
+                onClickSecond: function(selected_prize_detail, index) {
+                    $('#result').css('display', 'none');
+                    $('#main').removeClass('mask');
+                    this.selected = this.btns[this.selected_title_index][index];
+                    this.selected_prize_detail = selected_prize_detail;
                 },
                 onClick: function(prize_title, index){
                     $('#result').css('display', 'none');
                     $('#main').removeClass('mask');
                     this.selected_title = prize_title;
-                    // $('#prize_select_page').css('display', 'block').html(
-                    //     '<div style="display: block">' +
-                    //       // '<div v-for="(value, index) in ' + prize_detail.Object + '" :key="index">' + 
-                    //         // '<button v-for="(secondValue, secondIndex) in value" class="prize-button-second" @click="onClickSecond(' + btns[index] + '[index], ' + prize_detail[index] + '[index])">按钮</button></div></div>'
-                    //         // '<button class="prize-button-second" @click="onClickSecond(' + btns[index][0].stringify() + ', ' + prize_detail[index][0].stringify() + ')">按钮</button></div>'
-                    //         // '<button class="prize-button-second" @click="onClickSecond(1, \'iPhone15 Pro Max\')">按钮</button></div>'
-                    // );
+                    this.isShow = true;
+                    this.selected_title_index = index;
                 },
                 toggle: function(){
                     if(this.running){
                         TagCanvas.SetSpeed('myCanvas', speed());
                         var ret = lottery(this.selected);
-                        if (ret.length === 0) {
+                        if (ret.length === 0 || this.selected === 0) {
                             $('#result').css('display', 'block').html('<span>先指定几等奖</span>');
                             return
                         }
                         $('#result').css('display', 'block').html(
                             '<div style="display: block"><span_prize>' + this.selected_title + '</span_prize></div>' +
+                            '<div style="display: block"><span_prize>' + this.selected_prize_detail + '</span_prize></div>' +
                             '<div style="display: block"><span>' + ret.join('</span><span>') + '</span></div>');
                         TagCanvas.Reload('myCanvas');
                         var selected_title = this.selected_title;
+                        var selected_prize_detail = this.selected_prize_detail;
                         setTimeout(function(){
                             // localStorage.setItem(new Date().toString(), JSON.stringify(ret));
-                            localStorage.setItem(selected_title, JSON.stringify(ret));
+                            localStorage.setItem(selected_title + ':' + selected_prize_detail, JSON.stringify(ret));
                             $('#main').addClass('mask');
                         }, 300);
                     } else {
